@@ -1,2 +1,40 @@
-<h1>Test Phase 1</h1>
-<p>Show a sentence here.</p>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跨境选品看板 - 巴西站</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="hero">
+        <h1>BRL 热销原品清单</h1>
+        <p>每日更新：请优先关注 <strong>P0</strong> 级别商品</p>
+    </header>
+
+    <main class="container">
+        <section class="toolbar">
+            <input type="text" id="searchInput" placeholder="搜索商品名称或描述...">
+            <select id="priorityFilter">
+                <option value="">所有优先级</option>
+                <option value="P0">P0 (核心)</option>
+                <option value="P1">P1 (重点)</option>
+                <option value="P2">P2 (常规)</option>
+            </select>
+            <select id="typeFilter">
+                <option value="">卖家类型(全部)</option>
+                <option value="3PF">3PF</option>
+                <option value="SLS">SLS</option>
+            </select>
+            <button id="resetBtn">重置</button>
+        </section>
+
+        <div id="productGrid" class="grid">
+            <div class="loading">正在加载选品数据...</div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
