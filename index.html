@@ -15,12 +15,13 @@
         </div>
     </header>
 
-    <main class="container">
+    <main class="container page-content">
         <section class="filter-bar">
-            <input type="text" id="searchInput" placeholder="搜索商品名称/ID...">
             <select id="priorityFilter"><option value="">优先级(全部)</option></select>
+            <select id="clusterFilter"><option value="">Cluster(全部)</option></select>
             <select id="l1Filter"><option value="">二级类目(全部)</option></select>
             <select id="l2Filter"><option value="">三级类目(全部)</option></select>
+            <select id="typeFilter"><option value="">卖家类型(全部)</option></select>
             <button id="resetBtn">重置</button>
         </section>
 
@@ -28,7 +29,6 @@
         <div id="productGrid" class="grid"></div>
     </main>
 
-    <div id="toast" class="toast hidden">已复制 ID</div>
     <script src="app.js"></script>
 </body>
 </html>
