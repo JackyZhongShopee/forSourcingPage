@@ -1,77 +1,84 @@
+// 假设汇率（你可以根据实时情况调整）
+const BRL_TO_CNY = 1.42;
+const BRL_TO_USD = 0.20;
+
 let allData = [];
 
-// 初始化
 async function init() {
     try {
-        // 1. 加载配置
         const configRes = await fetch('./config.json');
-        if (configRes.ok) {
-            const config = await configRes.json();
-            document.title = config.siteTitle;
-            const titleEl = document.getElementById('siteTitle');
-            const descEl = document.getElementById('siteDesc');
-            if (titleEl) titleEl.innerText = config.siteTitle;
-            if (descEl) descEl.innerText = config.siteDesc;
-        }
+        const config = await configRes.json();
+        document.title = config.siteTitle;
+        document.getElementById('siteTitle').innerText = config.siteTitle;
+        document.getElementById('siteDesc').innerText = config.siteDesc;
 
-        // 2. 解析 CSV
-        // 注意：使用 Papa.parse 时确保路径正确
         Papa.parse('./data/selection.csv', {
             download: true,
             header: true,
             skipEmptyLines: true,
-            encoding: "UTF-8",
             complete: function(results) {
-                console.log("CSV数据解析成功:", results.data);
                 allData = results.data;
-                
-                if (allData.length > 0) {
-                    renderCards(allData);
-                    const countEl = document.getElementById('count');
-                    if (countEl) countEl.innerText = allData.length;
-                } else {
-                    document.getElementById('productGrid').innerHTML = "CSV文件内没有数据。";
-                }
-            },
-            error: function(err) {
-                document.getElementById('productGrid').innerHTML = "CSV解析错误: " + err;
+                updateFilterOptions(allData); // 动态生成L1, L2选项
+                renderCards(allData);
             }
         });
-    } catch (err) {
-        document.getElementById('productGrid').innerHTML = "初始化失败，请检查文件路径或配置。";
-        console.error(err);
-    }
+    } catch (err) { console.error("初始化失败", err); }
 }
 
-// 渲染函数
+// 动态填充 L1 和 L2 的下拉框
+function updateFilterOptions(data) {
+    const l1Set = new Set();
+    const l2Set = new Set();
+    data.forEach(item => {
+        if(item.L1) l1Set.add(item.L1);
+        if(item.L2) l2Set.add(item.L2);
+    });
+
+    const l1Select = document.getElementById('l1Filter');
+    const l2Select = document.getElementById('l2Filter');
+    
+    l1Set.forEach(val => l1Select.add(new Option(val, val)));
+    l2Set.forEach(val => l2Select.add(new Option(val, val)));
+}
+
 function renderCards(data) {
     const grid = document.getElementById('productGrid');
-    if (!grid) return;
-
+    document.getElementById('count').innerText = data.length;
+    
     grid.innerHTML = data.map(item => {
-        // 处理图片URL：优先使用[参考图片链接]，没有则给占位图
-        const imgUrl = item['参考图片链接'] || 'https://via.placeholder.com/400?text=No+Image';
+        const imgUrl = item['参考图片链接'] || '';
+        const rawPrice = parseFloat(item['参考售价 (BRL)']) || 0;
+        const targetUrl = item['参考商品链接 (SHP/AE/Amazon/独立站/...)'];
+        const hasUrl = targetUrl && targetUrl.trim() !== "";
+        
+        // 只有当有描述时才显示标题
+        const titleHtml = item['商品描述 (名称)'] ? `<div class="title">${item['商品描述 (名称)']}</div>` : '';
         
         return `
-        <div class="card ${item.Priority || 'P2'}">
+        <div class="card ${item.Priority}">
             <div class="priority-badge">${item.Priority || 'P2'}</div>
-            <div class="img-container" style="height:200px; overflow:hidden; background:#eee;">
-                <img class="card-img" src="${imgUrl}" 
-                     style="width:100%; height:100%; object-fit:contain;"
-                     onerror="this.src='https://via.placeholder.com/400?text=Image+Error'">
+            <div class="img-container">
+                <img class="card-img" src="${imgUrl}" loading="lazy" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
             </div>
             <div class="card-content">
-                <div class="category" style="font-size:12px; color:#888;">${item.L1 || ''} > ${item.L2 || ''}</div>
-                <div class="title" style="font-weight:bold; margin:10px 0;">${item['商品描述 (名称)'] || '未命名商品'}</div>
-                <div class="price-row" style="color:#ee4d2d; font-weight:bold;">
-                    <span>R$</span>
-                    <span class="price">${item['参考售价 (BRL)'] || '0.00'}</span>
+                <div class="category">${item.L1 || ''} ${item.L2 ? ' > ' + item.L2 : ''}</div>
+                ${titleHtml}
+                <div class="price-section">
+                    <div class="main-price">建议售价 R$ ${rawPrice.toFixed(2)}</div>
+                    <div class="sub-price">
+                        约 ¥ ${(rawPrice * BRL_TO_CNY).toFixed(2)} | $ ${(rawPrice * BRL_TO_USD).toFixed(2)}
+                    </div>
                 </div>
-                <div class="btn-group" style="display:flex; gap:10px; margin-top:15px;">
-                    <a href="${item['参考商品链接 (SHP/AE/Amazon/独立站/...)'] || '#'}" target="_blank" 
-                       style="flex:1; background:#ee4d2d; color:white; text-align:center; padding:8px; border-radius:4px; text-decoration:none; font-size:13px;">原品链接</a>
-                    <button onclick="copyText('${item['参考图片']}')" 
-                       style="flex:1; background:#f0f0f0; border:none; padding:8px; border-radius:4px; font-size:13px; cursor:pointer;">复制ID</button>
+                <div class="tags">
+                    <span class="tag">${item.Cluster || ''}</span>
+                    <span class="tag">${item['建议卖家类型 (3PF/SLS/不限)'] || ''}</span>
+                </div>
+                <div class="btn-group">
+                    <a href="${hasUrl ? targetUrl : 'javascript:void(0)'}" 
+                       class="btn-main ${hasUrl ? '' : 'disabled'}" 
+                       target="${hasUrl ? '_blank' : '_self'}">
+                       参考链接
+                    </a>
                 </div>
             </div>
         </div>
@@ -79,54 +86,21 @@ function renderCards(data) {
     }).join('');
 }
 
-// 筛选逻辑
+// 筛选逻辑增加 L1 和 L2
 function filterData() {
     const keyword = document.getElementById('searchInput').value.toLowerCase();
     const priority = document.getElementById('priorityFilter').value;
-    const type = document.getElementById('typeFilter').value;
+    const l1 = document.getElementById('l1Filter').value;
+    const l2 = document.getElementById('l2Filter').value;
 
     const filtered = allData.filter(item => {
-        const desc = (item['商品描述 (名称)'] || "").toLowerCase();
-        const refId = (item['参考图片'] || "").toLowerCase();
-        const matchKeyword = desc.includes(keyword) || refId.includes(keyword);
+        const matchKeyword = (item['商品描述 (名称)'] || "").toLowerCase().includes(keyword);
         const matchPriority = priority === "" || item.Priority === priority;
-        const matchType = type === "" || item['建议卖家类型 (3PF/SLS/不限)'] === type;
-        return matchKeyword && matchPriority && matchType;
+        const matchL1 = l1 === "" || item.L1 === l1;
+        const matchL2 = l2 === "" || item.L2 === l2;
+        return matchKeyword && matchPriority && matchL1 && matchL2;
     });
-
     renderCards(filtered);
-    const countEl = document.getElementById('count');
-    if (countEl) countEl.innerText = filtered.length;
 }
 
-// 复制
-function copyText(text) {
-    if(!text || text === 'undefined') return;
-    navigator.clipboard.writeText(text).then(() => {
-        const toast = document.getElementById('toast');
-        if(toast) {
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 2000);
-        }
-    });
-}
-
-// 绑定事件
-document.addEventListener('DOMContentLoaded', () => {
-    init();
-    const sInput = document.getElementById('searchInput');
-    const pFilter = document.getElementById('priorityFilter');
-    const tFilter = document.getElementById('typeFilter');
-    const rBtn = document.getElementById('resetBtn');
-
-    if(sInput) sInput.addEventListener('input', filterData);
-    if(pFilter) pFilter.addEventListener('change', filterData);
-    if(tFilter) tFilter.addEventListener('change', filterData);
-    if(rBtn) rBtn.addEventListener('click', () => {
-        sInput.value = "";
-        pFilter.value = "";
-        tFilter.value = "";
-        renderCards(allData);
-        document.getElementById('count').innerText = allData.length;
-    });
-});
+// 绑定事件 (需在 HTML 中添加对应的 ID)
