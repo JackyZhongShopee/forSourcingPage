@@ -3,38 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>跨境选品看板 - 巴西站</title>
+    <title>正在加载...</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
     <header class="hero">
-        <h1>BRL 热销原品清单</h1>
-        <p>每日更新：请优先关注 <strong>P0</strong> 级别商品</p>
+        <div class="container">
+            <h1 id="siteTitle">选品清单</h1>
+            <p id="siteDesc"></p>
+            <div class="update-tag">🚀 数据实时更新</div>
+        </div>
     </header>
 
     <main class="container">
-        <section class="toolbar">
-            <input type="text" id="searchInput" placeholder="搜索商品名称或描述...">
-            <select id="priorityFilter">
-                <option value="">所有优先级</option>
-                <option value="P0">P0 (核心)</option>
-                <option value="P1">P1 (重点)</option>
-                <option value="P2">P2 (常规)</option>
-            </select>
-            <select id="typeFilter">
-                <option value="">卖家类型(全部)</option>
-                <option value="3PF">3PF</option>
-                <option value="SLS">SLS</option>
-            </select>
-            <button id="resetBtn">重置</button>
+        <section class="filter-bar">
+            <input type="text" id="searchInput" placeholder="搜索描述或ID...">
+            <div class="select-group">
+                <select id="priorityFilter">
+                    <option value="">优先级(全部)</option>
+                    <option value="P0">P0 核心</option>
+                    <option value="P1">P1 重点</option>
+                    <option value="P2">P2 常规</option>
+                </select>
+                <select id="typeFilter">
+                    <option value="">卖家类型(全部)</option>
+                    <option value="3PF">3PF</option>
+                    <option value="SLS">SLS</option>
+                    <option value="不限">不限</option>
+                </select>
+            </div>
+            <button id="resetBtn" class="btn-ghost">重置</button>
         </section>
 
+        <div class="stats">
+            已筛选出 <span id="count">0</span> 款热销原品
+        </div>
+
         <div id="productGrid" class="grid">
-            <div class="loading">正在加载选品数据...</div>
+            <div class="loading">数据加载中...</div>
         </div>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <div id="toast" class="toast hidden">已复制到剪贴板</div>
     <script src="app.js"></script>
 </body>
 </html>
